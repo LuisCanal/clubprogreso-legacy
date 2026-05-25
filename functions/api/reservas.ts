@@ -1,3 +1,4 @@
+import { captchaSecret, verifyCaptchaAnswer } from '../_shared/captcha';
 import {
   escapeHtml,
   handleOptions,
@@ -10,6 +11,7 @@ interface Env {
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
   RESERVAS_TO_EMAIL: string;
+  CAPTCHA_SECRET?: string;
 }
 
 interface ReservaPayload {
@@ -20,6 +22,8 @@ interface ReservaPayload {
   date?: string;
   time?: string;
   message?: string;
+  captchaToken?: string;
+  captchaAnswer?: string;
 }
 
 export const onRequestOptions: PagesFunction = async () => handleOptions();
@@ -34,11 +38,36 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 
+  const secret = captchaSecret(env);
+  if (!secret) {
+    return json(
+      { success: false, message: 'Configuración de captcha incompleta.' },
+      500,
+    );
+  }
+
   let body: ReservaPayload;
   try {
     body = await readJson<ReservaPayload>(request);
   } catch {
     return json({ success: false, message: 'Datos inválidos.' }, 400);
+  }
+
+  const captchaOk = await verifyCaptchaAnswer(
+    secret,
+    body.captchaToken || '',
+    body.captchaAnswer ?? '',
+  );
+
+  if (!captchaOk) {
+    return json(
+      {
+        success: false,
+        message: 'La verificación anti-bots es incorrecta o expiró. Intente nuevamente.',
+        field: 'captcha',
+      },
+      400,
+    );
   }
 
   const name = (body.name || '').trim();
@@ -49,12 +78,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const time = (body.time || '').trim();
   const message = (body.message || '').trim();
 
-  if (!name || !email || !phone || !salon || !date || !time) {
-    return json({ success: false, message: 'Complete los campos obligatorios.' }, 400);
-  }
+  const missing: Record<string, string> = {};
+  if (!name) missing.name = 'Ingrese su nombre y apellido.';
+  if (!email) missing.email = 'Ingrese su e-mail.';
+  else if (!isValidEmail(email)) missing.email = 'Ingrese un e-mail válido.';
+  if (!phone) missing.phone = 'Ingrese su teléfono.';
+  if (!salon) missing.salon = 'Seleccione un espacio a reservar.';
+  if (!date) missing.date = 'Seleccione la fecha de reserva.';
+  if (!time) missing.time = 'Indique el horario de la reserva.';
 
-  if (!isValidEmail(email)) {
-    return json({ success: false, message: 'Ingrese un email válido.' }, 400);
+  if (Object.keys(missing).length > 0) {
+    return json(
+      {
+        success: false,
+        message: 'Complete los campos obligatorios marcados con *.',
+        fields: missing,
+      },
+      400,
+    );
   }
 
   const html = `

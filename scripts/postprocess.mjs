@@ -126,7 +126,6 @@ const SEO = {
 const FB_ALBUMS = {
   gimnasia: 'https://www.facebook.com/media/set/?set=a.557983080993449.1073741834.411575172300908',
   salones: 'https://www.facebook.com/media/set/?set=a.764218813703207.1073741838.411575172300908',
-  eventos: 'https://www.facebook.com/media/set/?set=a.556458994479191.1073741833.411575172300908',
 };
 
 function walkHtmlFiles(dir, files = []) {
@@ -271,15 +270,6 @@ function escapeAttr(value) {
   return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
 }
 
-function injectBodyExtras(html) {
-  const snippet = `
-<script src="/assets/cpc-forms.js" defer></script>`;
-  if (html.includes('/assets/cpc-forms.js')) {
-    return html;
-  }
-  return html.replace('</body>', `${snippet}\n</body>`);
-}
-
 function fixLegacyUrls(html) {
   return html
     .replaceAll('http://c2001384.ferozo.com/wp-content/', '/wp-content/')
@@ -295,7 +285,12 @@ function fixFacebookEmbeds(html, pagePath) {
 
   html = html.replace(
     /<p>\[facebook https:\/\/www\.facebook\.com\/media\/set\/\?set=a\.556458994479191\.1073741833\.411575172300908 \]<\/p>/g,
-    facebookEmbed(FB_ALBUMS.eventos),
+    '',
+  );
+
+  html = html.replace(
+    /<div class="cpc-fb-embed">[\s\S]*?556458994479191[\s\S]*?<\/div>/g,
+    '',
   );
 
   if (pagePath === '/sociales/salones/') {
@@ -310,6 +305,112 @@ function fixFacebookEmbeds(html, pagePath) {
 
 function fixBrokenHead(html) {
   return html.replace(/<\/script><html><head>/g, '</script>\n');
+}
+
+function fixWhatsApp(html) {
+  const groupInvite =
+    'https:\\/\\/chat.whatsapp.com\\/EQuPUtcPzEdIZVlT8JyyNw';
+
+  return html
+    .replaceAll('&quot;whatsapp_link_type&quot;:&quot;web&quot;', '&quot;whatsapp_link_type&quot;:&quot;api&quot;')
+    .replaceAll('"whatsapp_link_type":"web"', '"whatsapp_link_type":"api"')
+    .replaceAll(`&quot;group&quot;:&quot;${groupInvite}&quot;`, '&quot;group&quot;:&quot;&quot;')
+    .replaceAll(`"group":"${groupInvite}"`, '"group":""');
+}
+
+const FORM_CAPTCHA_ROW = `
+	<tr class="cpc-captcha-row">
+		<td style="text-align:right;">
+			<p>Verificación anti-bots: <span class="cpc-required-mark" aria-hidden="true">*</span></p>
+		</td>
+		<td>
+			<p><span class="cpc-captcha-wrap"><label id="cpc-captcha-question" for="cpc-captcha-answer">Cargando verificación...</label><br><input type="number" id="cpc-captcha-answer" name="cpc-captcha-answer" class="wpcf7-form-control wpcf7-text" inputmode="numeric" autocomplete="off" aria-required="true"><input type="hidden" id="cpc-captcha-token" name="cpc-captcha-token" value=""></span></p>
+		</td>
+	</tr>`;
+
+const SUBMIT_ROW_PREFIX = `\t<tr>
+\t\t<td>
+\t\t</td>
+\t\t<td>
+\t\t\t<p><input class="wpcf7-form-control wpcf7-submit has-spinner" type="submit" value="Enviar">`;
+
+function addFormEnhancements(html, requiredLabels, introFrom, introTo) {
+  if (html.includes('cpc-captcha-row')) {
+    return html;
+  }
+
+  for (const [from, to] of requiredLabels) {
+    html = html.replaceAll(from, to);
+  }
+
+  html = html.replace(introFrom, introTo);
+
+  html = html.replace(
+    SUBMIT_ROW_PREFIX,
+    `${FORM_CAPTCHA_ROW}
+${SUBMIT_ROW_PREFIX}`,
+  );
+
+  if (!html.includes('/assets/cpc-forms.css')) {
+    html = html.replace(
+      '<link rel="stylesheet" id="contact-form-7-css"',
+      '<link rel="stylesheet" href="/assets/cpc-forms.css">\n<link rel="stylesheet" id="contact-form-7-css"',
+    );
+  }
+
+  return html;
+}
+
+const RESERVA_REQUIRED_LABELS = [
+  ['Su nombre y apellido:', 'Su nombre y apellido: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+  ['Su e-mail:', 'Su e-mail: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+  ['Su teléfono:', 'Su teléfono: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+  ['Espacio a Reservar:', 'Espacio a Reservar: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+  ['Fecha de Reserva:', 'Fecha de Reserva: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+  ['Horario:', 'Horario: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+];
+
+const CONTACT_REQUIRED_LABELS = [
+  ['Su nombre y apellido:', 'Su nombre y apellido: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+  ['Su e-mail:', 'Su e-mail: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+  ['Mensaje - Nota:', 'Mensaje - Nota: <span class="cpc-required-mark" aria-hidden="true">*</span>'],
+];
+
+function enhanceReservasForm(html) {
+  return addFormEnhancements(
+    html,
+    RESERVA_REQUIRED_LABELS,
+    '<p>Para realizar reservas, puede contactarse con Secretaría de Lunes a Viernes 09:00 a 13:00 horas o bien completar el formulario debajo y le responderemos a la brevedad.</p>',
+    '<p>Para realizar reservas, puede contactarse con Secretaría de Lunes a Viernes 09:00 a 13:00 horas o bien completar el formulario debajo y le responderemos a la brevedad.</p>\n<p class="cpc-required-note"><small>Los campos marcados con <span class="cpc-required-mark" aria-hidden="true">*</span> son obligatorios.</small></p>',
+  );
+}
+
+function enhanceContactForm(html) {
+  return addFormEnhancements(
+    html,
+    CONTACT_REQUIRED_LABELS,
+    '<p>Puede contactarse con Secretaría de Lunes a Viernes 14:00 a 18:00 horas o bien completar el formulario debajo y le responderemos a la brevedad.</p>',
+    '<p>Puede contactarse con Secretaría de Lunes a Viernes 14:00 a 18:00 horas o bien completar el formulario debajo y le responderemos a la brevedad.</p>\n<p class="cpc-required-note"><small>Los campos marcados con <span class="cpc-required-mark" aria-hidden="true">*</span> son obligatorios.</small></p>',
+  );
+}
+
+function injectBodyExtras(html) {
+  const snippet = `
+<script src="/assets/cpc-forms.js" defer></script>
+<script src="/assets/cpc-whatsapp.js" defer></script>`;
+  if (html.includes('/assets/cpc-whatsapp.js')) {
+    if (!html.includes('/assets/cpc-forms.js')) {
+      return html.replace('</body>', `\n<script src="/assets/cpc-forms.js" defer></script>\n</body>`);
+    }
+    return html;
+  }
+  if (html.includes('/assets/cpc-forms.js')) {
+    return html.replace(
+      '<script src="/assets/cpc-forms.js" defer></script>',
+      snippet.trim(),
+    );
+  }
+  return html.replace('</body>', `${snippet}\n</body>`);
 }
 
 function writeRobots() {
@@ -359,6 +460,13 @@ function processFile(filePath) {
   html = removeLegacyAnalytics(html);
   html = fixLegacyUrls(html);
   html = fixFacebookEmbeds(html, pagePath);
+  html = fixWhatsApp(html);
+  if (pagePath === '/sociales/reservas/') {
+    html = enhanceReservasForm(html);
+  }
+  if (pagePath === '/contactenos/') {
+    html = enhanceContactForm(html);
+  }
   html = injectHeadExtras(html, pagePath, SEO[pagePath]);
   html = injectBodyExtras(html);
   fs.writeFileSync(filePath, html, 'utf8');

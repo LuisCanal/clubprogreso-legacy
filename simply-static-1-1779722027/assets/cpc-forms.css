@@ -1,0 +1,23 @@
+.cpc-required-mark {
+  color: #dc3232;
+  font-weight: bold;
+}
+
+.cpc-required-note {
+  margin: 0 0 1em;
+}
+
+#cpc-captcha-question {
+  display: inline-block;
+  font-weight: bold;
+  margin-bottom: 0.35em;
+}
+
+.cpc-captcha-wrap input[type="number"] {
+  max-width: 120px;
+  margin-top: 0.35em;
+}
+
+.wpcf7-form-control.wpcf7-not-valid {
+  border-color: #dc3232;
+}

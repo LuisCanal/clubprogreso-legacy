@@ -1,3 +1,4 @@
+import { captchaSecret, verifyCaptchaAnswer } from '../_shared/captcha';
 import {
   escapeHtml,
   handleOptions,
@@ -10,6 +11,7 @@ interface Env {
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
   CONTACT_TO_EMAIL: string;
+  CAPTCHA_SECRET?: string;
 }
 
 interface ContactPayload {
@@ -17,6 +19,8 @@ interface ContactPayload {
   email?: string;
   subject?: string;
   message?: string;
+  captchaToken?: string;
+  captchaAnswer?: string;
 }
 
 export const onRequestOptions: PagesFunction = async () => handleOptions();
@@ -31,6 +35,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 
+  const secret = captchaSecret(env);
+  if (!secret) {
+    return json(
+      { success: false, message: 'Configuración de captcha incompleta.' },
+      500,
+    );
+  }
+
   let body: ContactPayload;
   try {
     body = await readJson<ContactPayload>(request);
@@ -38,17 +50,43 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ success: false, message: 'Datos inválidos.' }, 400);
   }
 
+  const captchaOk = await verifyCaptchaAnswer(
+    secret,
+    body.captchaToken || '',
+    body.captchaAnswer ?? '',
+  );
+
+  if (!captchaOk) {
+    return json(
+      {
+        success: false,
+        message: 'La verificación anti-bots es incorrecta o expiró. Intente nuevamente.',
+        field: 'captcha',
+      },
+      400,
+    );
+  }
+
   const name = (body.name || '').trim();
   const email = (body.email || '').trim();
   const subject = (body.subject || 'Consulta desde el sitio web').trim();
   const message = (body.message || '').trim();
 
-  if (!name || !email || !message) {
-    return json({ success: false, message: 'Complete los campos obligatorios.' }, 400);
-  }
+  const missing: Record<string, string> = {};
+  if (!name) missing.name = 'Ingrese su nombre y apellido.';
+  if (!email) missing.email = 'Ingrese su e-mail.';
+  else if (!isValidEmail(email)) missing.email = 'Ingrese un e-mail válido.';
+  if (!message) missing.message = 'Ingrese su mensaje.';
 
-  if (!isValidEmail(email)) {
-    return json({ success: false, message: 'Ingrese un email válido.' }, 400);
+  if (Object.keys(missing).length > 0) {
+    return json(
+      {
+        success: false,
+        message: 'Complete los campos obligatorios marcados con *.',
+        fields: missing,
+      },
+      400,
+    );
   }
 
   const html = `
