@@ -453,12 +453,28 @@ ${urls}
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), xml, 'utf8');
 }
 
+function fixFooterCredit(html) {
+  const newCredit =
+    '<a href="https://2011hi.com/" target="_blank" rel="noopener noreferrer">dev by 2011hi.com</a>';
+
+  return html
+    .replaceAll(
+      '<a href="http://2011hi.com/" target="_blank">Diseño y Hosting 2011hi.com</a>',
+      newCredit,
+    )
+    .replaceAll(
+      '<a href="https://2011hi.com/" target="_blank">Diseño y Hosting 2011hi.com</a>',
+      newCredit,
+    );
+}
+
 function processFile(filePath) {
   const pagePath = pagePathFromFile(filePath);
   let html = fs.readFileSync(filePath, 'utf8');
   html = fixBrokenHead(html);
   html = removeLegacyAnalytics(html);
   html = fixLegacyUrls(html);
+  html = fixFooterCredit(html);
   html = fixFacebookEmbeds(html, pagePath);
   html = fixWhatsApp(html);
   if (pagePath === '/sociales/reservas/') {
