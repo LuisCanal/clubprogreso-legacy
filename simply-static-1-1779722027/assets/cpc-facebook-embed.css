@@ -1,0 +1,19 @@
+.cpc-fb-embed {
+  margin: 1.5em 0;
+  max-width: 100%;
+}
+
+.cpc-fb-embed iframe {
+  border: none;
+  max-width: 100%;
+  overflow: hidden;
+  width: 100%;
+}
+
+.cpc-fb-embed-link {
+  margin-top: 0.75em;
+}
+
+.cpc-fb-embed-link a {
+  color: inherit;
+}

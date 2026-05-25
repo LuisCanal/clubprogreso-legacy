@@ -1,0 +1,36 @@
+.ppsSmLinksShell,
+.ppsSm .supsystic-social-sharing {
+  text-align: center;
+}
+.ppsSmLink {
+  display: inline-block;
+  background-repeat: no-repeat;
+  float: none;
+}
+.ppsSmLink.boxy,
+.ppsSmLink.simple {
+  width: 48px;
+  height: 48px;
+}
+.ppsSmLink.boxy {
+  margin: 0 6px 6px 0;
+}
+.ppsSmLink.boxy.facebook {
+  background-image: url('/wp-content/plugins/popup-by-supsystic/modules/sm/PPS_MOD_PATHimg/Facebook-boxy.png');
+}
+.ppsSmLink.boxy.googleplus {
+  background-image: url('/wp-content/plugins/popup-by-supsystic/modules/sm/PPS_MOD_PATHimg/Googleplus-boxy.png');
+}
+.ppsSmLink.boxy.twitter {
+  background-image: url('/wp-content/plugins/popup-by-supsystic/modules/sm/PPS_MOD_PATHimg/Twitter-boxy.png');
+}
+
+.ppsSmLink.simple.facebook {
+  background-image: url('/wp-content/plugins/popup-by-supsystic/modules/sm/PPS_MOD_PATHimg/facebook-simple.png');
+}
+.ppsSmLink.simple.googleplus {
+  background-image: url('/wp-content/plugins/popup-by-supsystic/modules/sm/PPS_MOD_PATHimg/googleplus-simple.png');
+}
+.ppsSmLink.simple.twitter {
+  background-image: url('/wp-content/plugins/popup-by-supsystic/modules/sm/PPS_MOD_PATHimg/twitter-simple.png');
+}

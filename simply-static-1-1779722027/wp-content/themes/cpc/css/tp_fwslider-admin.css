@@ -1,0 +1,127 @@
+
+
+.tp-fwslider-table .column-del{
+	width: 2%;
+}
+
+.tp-fwslider-table .column-title{
+	width: 15%;
+}
+
+
+.tp-fwslider-table .column-thumbs .description{
+	line-height: 40px;
+}
+
+.tp-fwslider-table tbody tr,
+.tp-fwslider-table tbody td{
+	height: 50px;
+	vertical-align: middle;
+}
+
+.tp-fwslider-table .tp-fwslider-thumb{
+	vertical-align: middle;	
+	max-height: 40px;
+	height: 40px;
+	width: 80px;
+	margin-right: 10px;
+	margin-top: 2px;
+	margin-bottom: 2px;
+	background-size: cover;
+	background-repeat: no-repat;
+	float: left;
+}
+
+
+
+.wp-admin table.tp-fwslider {
+	margin-bottom: 30px;
+}
+
+.wp-admin table.tp-fwslider select{
+	width: 200px;
+	height: 150px;
+	margin-right: 10px;
+}
+
+
+.wp-admin table.tp-fwslider .tp-fwslider-item{	
+	width: 520px;
+	height: 120px;
+	border-radius: 3px;
+	background-color: #FFF;	
+	float: left;
+	border: 1px solid #ccc;
+	display: inline-block;
+	position: relative;
+	margin-bottom: 20px;
+	clear: both;
+	font-size: 13px;
+}
+
+body.rtl.wp-admin table.tp-fwslider .tp-fwslider-item {
+	float: right;	
+}
+
+.wp-admin table.tp-fwslider .tp-fwslider-image{
+	width: 170px;
+	height: 100px;
+	background-size: cover;
+	background-repeat: no-repeat;	
+	float: left;
+	margin-top: 10px;
+	margin-left: 10px;
+	cursor: move;		
+}
+
+.wp-admin table.tp-fwslider .holder{
+	width: 100%;
+	clear: left;
+	margin-top: 20px;
+}
+
+body.rtl.wp-admin table.tp-fwslider .holder {
+	clear: right;
+}
+
+.wp-admin table.tp-fwslider .holder .remove{
+	cursor: pointer;
+	width: 16px;
+	height: 16px;
+	position: absolute;
+	top: -8px;
+	left: -8px;
+	background-image: url('/wp-content/themes/cpc/images/remove.png');
+	background-repeat: no-repeat;
+}
+
+
+
+
+.wp-admin .tp-fwslider-item textarea{
+	width: 190px;
+	max-width: 190px;
+	height: 75px;
+	max-height: 75px;
+	line-height: 18px;
+	font-size: 13px;
+	float: left;
+	margin-top: 7px;
+}
+
+.wp-admin .tp-fwslider-item .caption{	
+	float: left;
+	margin-left: 20px;
+	margin-right: 20px;
+	margin-top: 10px;
+}
+.wp-admin .tp-fwslider-item .align{
+	margin-top: 10px;
+	float: left;
+	line-height: 20px;
+}
+
+
+
+
+

@@ -1,0 +1,14 @@
+{
+  "name": "clubprogreso-legacy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/postprocess.mjs",
+    "postprocess": "node scripts/postprocess.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250320.0",
+    "typescript": "^5.8.2"
+  }
+}
