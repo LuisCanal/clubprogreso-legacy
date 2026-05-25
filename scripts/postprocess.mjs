@@ -512,6 +512,13 @@ function fixCaptchaLayout(html) {
   return html;
 }
 
+function removeMobileMenuSearch(html) {
+  return html.replace(
+    /<!-- SEARCH FORM -->\s*<div class="search">[\s\S]*?<\/form>\s*<\/div>/,
+    '',
+  );
+}
+
 function fixFooterCredit(html) {
   const newCredit =
     '<a href="https://2011hi.com/" target="_blank" rel="noopener noreferrer">dev by 2011hi.com</a>';
@@ -533,6 +540,7 @@ function processFile(filePath) {
   html = fixBrokenHead(html);
   html = removeLegacyAnalytics(html);
   html = fixLegacyUrls(html);
+  html = removeMobileMenuSearch(html);
   html = fixFooterCredit(html);
   html = fixCaptchaLayout(html);
   html = fixFacebookEmbeds(html, pagePath);
