@@ -89,6 +89,7 @@ export async function verifyCaptchaAnswer(
 export function captchaSecret(env: {
   CAPTCHA_SECRET?: string;
   RESEND_API_KEY?: string;
+  MAILCHIMP_API_KEY?: string;
 }): string | null {
-  return env.CAPTCHA_SECRET || env.RESEND_API_KEY || null;
+  return env.CAPTCHA_SECRET || env.RESEND_API_KEY || env.MAILCHIMP_API_KEY || null;
 }

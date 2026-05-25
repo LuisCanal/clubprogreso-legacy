@@ -1,9 +1,12 @@
+import { captchaSecret, verifyCaptchaAnswer } from '../_shared/captcha';
 import { handleOptions, isValidEmail, json, readJson } from '../_shared/http';
 
 interface Env {
   MAILCHIMP_API_KEY: string;
   MAILCHIMP_LIST_ID: string;
   MAILCHIMP_SERVER_PREFIX: string;
+  CAPTCHA_SECRET?: string;
+  RESEND_API_KEY?: string;
 }
 
 interface NewsletterPayload {
@@ -13,6 +16,8 @@ interface NewsletterPayload {
   phone?: string;
   memberCategory?: string;
   honeypot?: string;
+  captchaToken?: string;
+  captchaAnswer?: string;
 }
 
 export const onRequestOptions: PagesFunction = async () => handleOptions();
@@ -36,6 +41,31 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   if (body.honeypot) {
     return json({ success: true, message: 'Gracias por suscribirse.' });
+  }
+
+  const secret = captchaSecret(env);
+  if (!secret) {
+    return json(
+      { success: false, message: 'Configuración de captcha incompleta.' },
+      500,
+    );
+  }
+
+  const captchaOk = await verifyCaptchaAnswer(
+    secret,
+    body.captchaToken || '',
+    body.captchaAnswer ?? '',
+  );
+
+  if (!captchaOk) {
+    return json(
+      {
+        success: false,
+        message: 'La verificación anti-bots es incorrecta o expiró. Intente nuevamente.',
+        field: 'captcha',
+      },
+      400,
+    );
   }
 
   const email = (body.email || '').trim();

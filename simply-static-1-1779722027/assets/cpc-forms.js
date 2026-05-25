@@ -16,6 +16,12 @@
     { name: 'your-message', key: 'message', message: 'Ingrese su mensaje.', email: false },
   ];
 
+  var NEWSLETTER_FIELDS = [
+    { name: 'FNAME', key: 'fname', message: 'Ingrese su nombre.', email: false },
+    { name: 'LNAME', key: 'lname', message: 'Ingrese su apellido.', email: false },
+    { name: 'EMAIL', key: 'email', message: 'Ingrese su email.', email: true },
+  ];
+
   var SERVER_FIELD_MAP = {
     reserva: {
       name: 'your-name',
@@ -75,7 +81,7 @@
     if (!wrap) {
       return;
     }
-    var control = wrap.querySelector('.wpcf7-form-control, #cpc-captcha-answer');
+    var control = wrap.querySelector('.wpcf7-form-control, #cpc-captcha-answer, input, select, textarea');
     if (control) {
       control.classList.remove('wpcf7-not-valid');
       control.setAttribute('aria-invalid', 'false');
@@ -85,8 +91,12 @@
     });
   }
 
+  function captchaErrorWrap(form) {
+    return form.querySelector('.cpc-captcha-wrap') || form.querySelector('.cpc-captcha-row');
+  }
+
   function clearFormErrors(form) {
-    form.querySelectorAll('.wpcf7-form-control-wrap, .cpc-captcha-wrap').forEach(clearFieldError);
+    form.querySelectorAll('.wpcf7-form-control-wrap, .cpc-captcha-wrap, .cpc-captcha-row').forEach(clearFieldError);
   }
 
   function showFieldError(wrap, message) {
@@ -94,7 +104,7 @@
       return;
     }
     clearFieldError(wrap);
-    var control = wrap.querySelector('.wpcf7-form-control, #cpc-captcha-answer');
+    var control = wrap.querySelector('.wpcf7-form-control, #cpc-captcha-answer, input, select, textarea');
     if (control) {
       control.classList.add('wpcf7-not-valid');
       control.setAttribute('aria-invalid', 'true');
@@ -115,12 +125,22 @@
     return control ? String(control.value || '').trim() : '';
   }
 
-  function validateForm(form, fields, withCaptcha) {
+  function fieldWrap(form, fieldName, selector) {
+    if (selector) {
+      return form.querySelector(selector);
+    }
+    var control = form.querySelector('[name="' + fieldName + '"]');
+    return control ? control.closest('p') : null;
+  }
+
+  function validateForm(form, fields, withCaptcha, wrapForField) {
     var errors = [];
 
     fields.forEach(function (field) {
       var value = fieldValue(form, field.name);
-      var wrap = form.querySelector('.wpcf7-form-control-wrap[data-name="' + field.name + '"]');
+      var wrap = wrapForField
+        ? wrapForField(form, field)
+        : form.querySelector('.wpcf7-form-control-wrap[data-name="' + field.name + '"]');
       if (!value) {
         errors.push({ wrap: wrap, message: field.message, key: field.key });
         return;
@@ -132,7 +152,7 @@
 
     if (withCaptcha) {
       var captchaAnswer = form.querySelector('#cpc-captcha-answer');
-      var captchaWrap = form.querySelector('.cpc-captcha-wrap');
+      var captchaWrap = captchaErrorWrap(form);
       if (captchaAnswer && !String(captchaAnswer.value || '').trim()) {
         errors.push({
           wrap: captchaWrap,
@@ -150,7 +170,7 @@
       showFieldError(error.wrap, error.message);
     });
     if (errors.length && errors[0].wrap) {
-      var focusTarget = errors[0].wrap.querySelector('.wpcf7-form-control, #cpc-captcha-answer');
+      var focusTarget = errors[0].wrap.querySelector('.wpcf7-form-control, #cpc-captcha-answer, input, select, textarea');
       if (focusTarget) {
         focusTarget.focus();
       }
@@ -226,7 +246,7 @@
     var captchaAnswer = form.querySelector('#cpc-captcha-answer');
     if (captchaAnswer) {
       captchaAnswer.addEventListener('input', function () {
-        clearFieldError(form.querySelector('.cpc-captcha-wrap'));
+        clearFieldError(captchaErrorWrap(form));
       });
     }
   }
@@ -238,7 +258,7 @@
     var map = SERVER_FIELD_MAP[kind] || {};
     Object.keys(fields).forEach(function (key) {
       if (key === 'captcha') {
-        showFieldError(form.querySelector('.cpc-captcha-wrap'), fields[key]);
+        showFieldError(captchaErrorWrap(form), fields[key]);
         return;
       }
       var fieldName = map[key];
@@ -339,6 +359,28 @@
     });
   }
 
+  function bindNewsletterFieldValidation(form, fields) {
+    fields.forEach(function (field) {
+      var control = form.querySelector('[name="' + field.name + '"]');
+      if (!control) {
+        return;
+      }
+      control.addEventListener('input', function () {
+        clearFieldError(control.closest('p'));
+      });
+      control.addEventListener('change', function () {
+        clearFieldError(control.closest('p'));
+      });
+    });
+
+    var captchaAnswer = form.querySelector('#cpc-captcha-answer');
+    if (captchaAnswer) {
+      captchaAnswer.addEventListener('input', function () {
+        clearFieldError(captchaErrorWrap(form));
+      });
+    }
+  }
+
   function bindNewsletterForms() {
     document.querySelectorAll('form.mc4wp-form').forEach(function (form) {
       if (form.dataset.cpcBound === '1') {
@@ -346,9 +388,31 @@
       }
       form.dataset.cpcBound = '1';
 
+      var hasCaptcha = !!form.querySelector('#cpc-captcha-token');
+      var captchaUrl = '/api/newsletter/captcha';
+
+      if (hasCaptcha) {
+        bindNewsletterFieldValidation(form, NEWSLETTER_FIELDS);
+        loadCaptcha(form, captchaUrl);
+      }
+
       form.addEventListener('submit', async function (event) {
         event.preventDefault();
         event.stopImmediatePropagation();
+        clearFormErrors(form);
+
+        if (hasCaptcha) {
+          var validationErrors = validateForm(form, NEWSLETTER_FIELDS, true, function (currentForm, field) {
+            var control = currentForm.querySelector('[name="' + field.name + '"]');
+            return control ? control.closest('p') : null;
+          });
+          if (validationErrors.length) {
+            applyFieldErrors(validationErrors);
+            setOutput(form, 'Revise los campos obligatorios marcados con *.', true);
+            return;
+          }
+        }
+
         setLoading(form, true);
 
         try {
@@ -361,10 +425,27 @@
             honeypot: form.querySelector('[name="_mc4wp_honeypot"]')?.value || '',
           };
 
+          if (hasCaptcha) {
+            payload.captchaToken = form.querySelector('#cpc-captcha-token')?.value || '';
+            payload.captchaAnswer = form.querySelector('#cpc-captcha-answer')?.value || '';
+          }
+
           var result = await postJson('/api/newsletter', payload);
+          if (hasCaptcha && !result.success) {
+            if (result.field === 'captcha' || (result.fields && result.fields.captcha)) {
+              showFieldError(
+                captchaErrorWrap(form),
+                result.fields?.captcha || 'La verificación anti-bots es incorrecta o expiró.',
+              );
+              loadCaptcha(form, captchaUrl);
+            }
+          }
           setOutput(form, result.message, !result.success);
           if (result.success) {
             form.reset();
+            if (hasCaptcha) {
+              loadCaptcha(form, captchaUrl);
+            }
           }
         } catch (error) {
           setOutput(form, 'No se pudo completar la suscripción. Intente más tarde.', true);

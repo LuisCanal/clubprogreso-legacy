@@ -321,10 +321,10 @@ function fixWhatsApp(html) {
 const FORM_CAPTCHA_ROW = `
 	<tr class="cpc-captcha-row">
 		<td style="text-align:right;">
-			<p>Verificación anti-bots: <span class="cpc-required-mark" aria-hidden="true">*</span></p>
+			<p><span id="cpc-captcha-question" class="cpc-captcha-question">Cargando verificación...</span> <span class="cpc-required-mark" aria-hidden="true">*</span></p>
 		</td>
 		<td>
-			<p><span class="cpc-captcha-wrap"><label id="cpc-captcha-question" for="cpc-captcha-answer">Cargando verificación...</label><br><input type="number" id="cpc-captcha-answer" name="cpc-captcha-answer" class="wpcf7-form-control wpcf7-text" inputmode="numeric" autocomplete="off" aria-required="true"><input type="hidden" id="cpc-captcha-token" name="cpc-captcha-token" value=""></span></p>
+			<p><span class="cpc-captcha-wrap"><input type="number" id="cpc-captcha-answer" name="cpc-captcha-answer" class="wpcf7-form-control wpcf7-text" inputmode="numeric" autocomplete="off" aria-required="true" aria-labelledby="cpc-captcha-question"><input type="hidden" id="cpc-captcha-token" name="cpc-captcha-token" value=""></span></p>
 		</td>
 	</tr>`;
 
@@ -394,6 +394,45 @@ function enhanceContactForm(html) {
   );
 }
 
+const NEWSLETTER_REQUIRED_LABELS = [
+  ['<label>Nombre:</label>', '<label>Nombre: <span class="cpc-required-mark" aria-hidden="true">*</span></label>'],
+  ['<label>Apellido:</label>', '<label>Apellido: <span class="cpc-required-mark" aria-hidden="true">*</span></label>'],
+  ['<label>Email: </label>', '<label>Email: <span class="cpc-required-mark" aria-hidden="true">*</span></label>'],
+];
+
+const NEWSLETTER_CAPTCHA_BLOCK = `<p class="cpc-captcha-row">
+    <span id="cpc-captcha-question" class="cpc-captcha-question">Cargando verificación...</span> <span class="cpc-required-mark" aria-hidden="true">*</span>
+    <input type="number" id="cpc-captcha-answer" name="cpc-captcha-answer" inputmode="numeric" autocomplete="off" aria-required="true" aria-labelledby="cpc-captcha-question">
+    <input type="hidden" id="cpc-captcha-token" name="cpc-captcha-token" value="">
+</p>
+
+<p>
+	<input type="submit" value="Suscribirse">`;
+
+function enhanceNewsletterForm(html) {
+  if (html.includes('cpc-captcha-row')) {
+    return html;
+  }
+
+  for (const [from, to] of NEWSLETTER_REQUIRED_LABELS) {
+    html = html.replaceAll(from, to);
+  }
+
+  html = html.replace(
+    /<p>\s*<input type="submit" value="Suscribirse">\s*<\/p>/,
+    NEWSLETTER_CAPTCHA_BLOCK,
+  );
+
+  if (!html.includes('/assets/cpc-forms.css')) {
+    html = html.replace(
+      '<link rel="stylesheet" id="mc4wp-form-basic-css"',
+      '<link rel="stylesheet" href="/assets/cpc-forms.css">\n<link rel="stylesheet" id="mc4wp-form-basic-css"',
+    );
+  }
+
+  return html;
+}
+
 function injectBodyExtras(html) {
   const snippet = `
 <script src="/assets/cpc-forms.js" defer></script>
@@ -453,6 +492,26 @@ ${urls}
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), xml, 'utf8');
 }
 
+function fixCaptchaLayout(html) {
+  if (html.includes('cpc-captcha-row')) {
+    html = html.replace(
+      /<tr class="cpc-captcha-row">[\s\S]*?<\/tr>/,
+      FORM_CAPTCHA_ROW.trim(),
+    );
+
+    html = html.replace(
+      /<p class="cpc-captcha-row">[\s\S]*?<\/p>/,
+      `<p class="cpc-captcha-row">
+    <span id="cpc-captcha-question" class="cpc-captcha-question">Cargando verificación...</span> <span class="cpc-required-mark" aria-hidden="true">*</span>
+    <input type="number" id="cpc-captcha-answer" name="cpc-captcha-answer" inputmode="numeric" autocomplete="off" aria-required="true" aria-labelledby="cpc-captcha-question">
+    <input type="hidden" id="cpc-captcha-token" name="cpc-captcha-token" value="">
+</p>`,
+    );
+  }
+
+  return html;
+}
+
 function fixFooterCredit(html) {
   const newCredit =
     '<a href="https://2011hi.com/" target="_blank" rel="noopener noreferrer">dev by 2011hi.com</a>';
@@ -475,6 +534,7 @@ function processFile(filePath) {
   html = removeLegacyAnalytics(html);
   html = fixLegacyUrls(html);
   html = fixFooterCredit(html);
+  html = fixCaptchaLayout(html);
   html = fixFacebookEmbeds(html, pagePath);
   html = fixWhatsApp(html);
   if (pagePath === '/sociales/reservas/') {
@@ -482,6 +542,9 @@ function processFile(filePath) {
   }
   if (pagePath === '/contactenos/') {
     html = enhanceContactForm(html);
+  }
+  if (pagePath === '/novedades/') {
+    html = enhanceNewsletterForm(html);
   }
   html = injectHeadExtras(html, pagePath, SEO[pagePath]);
   html = injectBodyExtras(html);

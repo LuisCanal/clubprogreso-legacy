@@ -7,17 +7,50 @@
   margin: 0 0 1em;
 }
 
-#cpc-captcha-question {
-  display: inline-block;
+#cpc-captcha-question,
+.cpc-captcha-question {
+  display: inline;
   font-weight: bold;
-  margin-bottom: 0.35em;
+  margin: 0;
 }
 
-.cpc-captcha-wrap input[type="number"] {
-  max-width: 120px;
-  margin-top: 0.35em;
+.cpc-captcha-wrap {
+  display: inline;
 }
 
-.wpcf7-form-control.wpcf7-not-valid {
+.cpc-captcha-wrap input[type="number"],
+.mc4wp-form .cpc-captcha-row input[type="number"] {
+  display: inline-block;
+  width: auto;
+  max-width: 80px;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.content .wpcf7-form .cpc-captcha-row td > p {
+  float: none !important;
+  clear: none !important;
+  width: auto !important;
+  margin-bottom: 0 !important;
+}
+
+.content .wpcf7-form .cpc-captcha-row #cpc-captcha-question,
+.content .wpcf7-form .cpc-captcha-row .cpc-captcha-question {
+  float: none !important;
+  width: auto !important;
+  display: inline !important;
+  margin: 0 !important;
+  line-height: inherit !important;
+}
+
+.mc4wp-form .cpc-captcha-row .cpc-captcha-question {
+  display: inline;
+  margin-right: 0.35em;
+}
+
+.wpcf7-form-control.wpcf7-not-valid,
+.mc4wp-form input.wpcf7-not-valid,
+.mc4wp-form select.wpcf7-not-valid,
+.mc4wp-form textarea.wpcf7-not-valid {
   border-color: #dc3232;
 }
